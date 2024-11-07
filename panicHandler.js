@@ -23,7 +23,7 @@ export const handlePanic = async () => {
             const response = await axios.post('https://5ab3-2804-7d74-8c-bc00-cbb7-7856-5c02-c6de.ngrok-free.app/message/sendText/Alerta', {
                 number: contato.celular,
                 textMessage: {
-                    text: `Mensagem de teste, Localização: ${message}`
+                    text: `Preciso de ajuda! \nLocalização: ${message}`
                 },
                 options: {
                     delay: 0,
