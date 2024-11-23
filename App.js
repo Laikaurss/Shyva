@@ -12,6 +12,9 @@ import Calendario from './screens/calendario';
 import HomePage from './screens/homePage';
 import Addcontatos from './screens/addContato';
 import ConfigBotao from './screens/configBotao';
+import Informacoes from './screens/informacoes';
+import FAQScreen from './screens/perguntas';
+import Cofre from './screens/cofre';
 
 function HomeScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -132,13 +135,13 @@ function HomeScreen({ navigation }) {
 
 const HomeStack = createNativeStackNavigator();
 
-function HomeStackScreen({ navigation }) {
+function HomeStackScreen() {
   return (
     <>
       <StatusBar backgroundColor="#F9497D" barStyle="light-content" />
 
       <HomeStack.Navigator
-        screenOptions={{
+        screenOptions={({ navigation }) => ({
           headerStyle: {
             backgroundColor: '#fff',
             elevation: 0,
@@ -155,8 +158,10 @@ function HomeStackScreen({ navigation }) {
             >
               <Text style={{ color: '#808080', fontSize: 12 }}>Pular</Text>
             </TouchableOpacity>
+
+            
           ),
-        }}
+        })}
       >
         <HomeStack.Screen name="Home" component={HomeScreen} options={{ title: '' }} />
         <HomeStack.Screen name="HomePage" component={HomePage} options={{ headerShown: false }} />
@@ -166,6 +171,9 @@ function HomeStackScreen({ navigation }) {
         <HomeStack.Screen name="contatos" component={Contatos} options={{ headerShown: false }} />
         <HomeStack.Screen name="configBotao" component={ConfigBotao} options={{ headerShown: false }} />
         <HomeStack.Screen name="addcontatos" component={Addcontatos} options={{ headerShown: false }} />
+        <HomeStack.Screen name="informacoes" component={Informacoes} options={{ headerShown: false }} />
+        <HomeStack.Screen name="perguntas" component={FAQScreen} options={{ headerShown: false }} />
+        <HomeStack.Screen name="cofre" component={Cofre} options={{ headerShown: false }} />
       </HomeStack.Navigator>
     </>
   );

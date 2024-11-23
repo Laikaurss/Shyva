@@ -26,7 +26,9 @@ export default function Configuracoes() {
                     <Image source={require('../assets/contato.png')} style={styles.imagem} />
                 </TouchableOpacity>
                 
-                <TouchableOpacity style={styles.botao}>
+                <TouchableOpacity style={styles.botao}
+                onPress={() => navigation.navigate('cofre')}>
+                     
                     <Text style={styles.textoBotao}> Cofre </Text> 
                     <Image source={require('../assets/setinha.png')} style={styles.setinha} />
                     <Image source={require('../assets/cadeado.png')} style={styles.imagem} />
@@ -34,11 +36,11 @@ export default function Configuracoes() {
                 
                 <TouchableOpacity 
                     style={styles.botao}
-                    onPress={() => navigation.navigate('configBotao')} // Navegação para configurar botões
+                    onPress={() => navigation.navigate('perguntas')} 
                 >
-                    <Text style={styles.textoBotao}> Configurar botões</Text> 
+                    <Text style={styles.textoBotao}> Perguntas frequentes</Text> 
                     <Image source={require('../assets/setinha.png')} style={styles.setinha} />
-                    <Image source={require('../assets/ativa.png')} style={styles.imagem} />
+                    <Image source={require('../assets/Ask.png')} style={styles.imagem} />
                 </TouchableOpacity>
             </View>
         </View>
