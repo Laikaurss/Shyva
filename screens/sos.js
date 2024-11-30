@@ -3,6 +3,7 @@ import { Button, Text, View, StyleSheet, Image, TouchableOpacity, PanResponder }
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'react-native';
+import { handlePanic } from '../panicHandler';
 
 export default function SOS() {
   const navigation = useNavigation();
@@ -52,7 +53,7 @@ export default function SOS() {
         <Image source={require('../assets/viva.png')} style={styles.image} />
         <View style={styles.esfera}></View>
 
-        <TouchableOpacity style={{ position: 'relative', justifyContent: 'center', marginTop: '25%', height: '50%', width: '30%' }}>
+        <TouchableOpacity onPress={handlePanic} style={{ position: 'relative', justifyContent: 'center', marginTop: '25%', height: '50%', width: '30%' }}>
           <Image source={require('../assets/circulo.png')} style={{ position: 'absolute', alignSelf: 'center', zIndex: 1, borderRadius: 1000, width: '110%', height: '105%' }} />
           <Image source={require('../assets/circulo2.png')} style={{ position: 'absolute', alignSelf: 'center', borderRadius: 1000, width: '160%', height: "150%" }} />
           <Image source={require('../assets/emergencia.png')} style={{ position: 'absolute', alignSelf: 'center', zIndex: 1, width: '80%', height: '65%' }} />
