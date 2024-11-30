@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, FlatList, TextInput, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, FlatList, Dimensions, Modal, TextInput, TouchableWithoutFeedback, BackHandler } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { excluirContato, carregarContatos } from './addContato';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
+const { width, height } = Dimensions.get('window');
 
 export default function Contatos() {
     const navigation = useNavigation();
     const [contatos, setContatos] = useState([]);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [mensagem, setMensagem] = useState('');
+    const [modalVisible, setModalVisible] = useState(false);  // Controla a visibilidade do modal
+    const [message, setMessage] = useState('');  // Armazena a mensagem
 
+    // Função para carregar os contatos
     useFocusEffect(
         React.useCallback(() => {
             const fetchContatos = async () => {
@@ -19,37 +23,65 @@ export default function Contatos() {
         }, [])
     );
 
-    const abrirModal = () => {
-        console.log('Abrindo modal'); // Debug para verificar se a função está sendo chamada
-        setModalVisible(true);
-    };
+    // Função para carregar a mensagem salva no AsyncStorage quando o modal for aberto
+    useEffect(() => {
+        const loadMessage = async () => {
+            const savedMessage = await AsyncStorage.getItem('userMessage');
+            if (savedMessage) {
+                setMessage(savedMessage);  // Carrega a mensagem salva no input
+            }
+        };
 
-    const fecharModal = () => {
-        console.log('Fechando modal'); // Debug para verificar se a função está sendo chamada
-        setModalVisible(false);
-    };
+        if (modalVisible) {
+            loadMessage();  // Carrega a mensagem quando o modal estiver visível
+        }
 
-    const salvarMensagem = () => {
-        console.log('Mensagem salva:', mensagem);
-        fecharModal();
+        // Fechar o modal ao pressionar o botão de voltar no Android
+        const backAction = () => {
+            if (modalVisible) {
+                setModalVisible(false);
+                return true; // Impede o fechamento padrão do Android
+            }
+            return false; // Permite o comportamento padrão do botão de voltar
+        };
+
+        // Adiciona o evento do botão de voltar
+        BackHandler.addEventListener('hardwareBackPress', backAction);
+
+        // Limpeza do evento ao desmontar o componente
+        return () => {
+            BackHandler.removeEventListener('hardwareBackPress', backAction);
+        };
+    }, [modalVisible]);
+
+    // Função para salvar a mensagem no AsyncStorage
+    const saveMessage = async () => {
+        try {
+            await AsyncStorage.setItem('userMessage', message);
+            setModalVisible(false);  // Fecha o modal após salvar
+            alert('Mensagem salva com sucesso!');
+        } catch (error) {
+            console.error('Erro ao salvar a mensagem', error);
+        }
     };
 
     return (
         <View style={styles.view}>
-            <TouchableOpacity 
-                style={styles.sair} 
-                onPress={() => navigation.navigate('configuracoes')} 
-            >
-                <Image source={require('../assets/setaesquerda.png')} style={styles.setaesquerda} />
-            </TouchableOpacity>
-            
-            <Text style={styles.texto}> Contatos </Text>
-                <View style={styles.botoes}> 
+            <View style={styles.textoBotaoContainer}>
+                <TouchableOpacity style={{ marginTop: 16 }} onPress={() => navigation.navigate('configuracoes')}>
+                    <AntDesign name="left" size={width * 0.07} color="black" />
+                </TouchableOpacity>
+                <Text style={styles.texto}>Contatos</Text>
+                <TouchableOpacity style={{ backgroundColor: '#F9497D' ,width:width * 0.15, height: height * 0.045, alignItems: 'center', borderRadius: 10, marginTop: 5 }} onPress={() => setModalVisible(true)}>
+                    <MaterialCommunityIcons name='email-edit-outline' style={{ color: 'white' }} size={width * 0.08}/>
+                </TouchableOpacity>
+            </View>
+            <View style={styles.botoes}>
                 <FlatList
                     data={contatos}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.contactItem}
                             onPress={() => navigation.navigate('EditarContato', { contato: item })}
                         >
@@ -58,48 +90,41 @@ export default function Contatos() {
                     )}
                     style={styles.contatosList}
                 />
-                <TouchableOpacity 
-                    style={styles.botao} 
-                    onPress={() => navigation.navigate('addcontatos')} 
-                >                    
-                    <Text style={styles.textoBotao}> Adicionar contato </Text>
+                <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('addcontatos')}>
+                    <Text style={styles.textoBotao}>Adicionar contato</Text>
                     <Image source={require('../assets/setinha.png')} style={styles.setinha} />
                     <Image source={require('../assets/adicionar.png')} style={styles.imagem} />
                 </TouchableOpacity>
             </View>
 
-            {/* Modal para gravar/editar mensagem */}
+            {/* Modal de Mensagem */}
             <Modal
                 visible={modalVisible}
-                animationType="slide"
+                animationType="slide"  // animação de slide
                 transparent={true}
-                onRequestClose={fecharModal}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Mensagem automática</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Olá, preciso de ajuda urgente. Estou em uma situação de violência. Por favor, venham me ajudar o mais rápido possível. Obrigada. "
-                            value={mensagem}
-                            onChangeText={setMensagem}
-                            multiline
-                        />
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity onPress={salvarMensagem} style={styles.saveButton}>
-                                <Text style={styles.buttonText}>Salvar</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={fecharModal} style={styles.cancelButton}>
-                                <Text style={styles.buttonText}>Cancelar</Text>
-                            </TouchableOpacity>
+                onRequestClose={() => setModalVisible(false)}>
+                <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Escreva uma mensagem</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Digite sua mensagem"
+                                value={message}
+                                multiline={true}
+                                numberOfLines={6}
+                                textAlignVertical="top"
+                                onChangeText={setMessage}  // Atualiza o valor da mensagem
+                            />
+                            <View style={styles.buttonContainer}>
+                                <TouchableOpacity style={styles.saveButton} onPress={saveMessage}>
+                                    <Text style={styles.saveButtonText}>Salvar</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
-                </View>
+                </TouchableWithoutFeedback>
             </Modal>
-
-            <TouchableOpacity onPress={abrirModal} style={{ position:'absolute', borderRadius: 5, top:55, right:10}}>
-            <Image source={require('../assets/Group_177.png')} style={{ width: 50, height: 30 }} resizeMode='contain' />
-            </TouchableOpacity>
         </View>
     );
 }
@@ -108,9 +133,9 @@ const styles = StyleSheet.create({
     view: {
         backgroundColor: "#FFE9E9",
         height: "100%",
-        width: "100%", 
+        width: "100%",
         alignItems: "center",
-        paddingTop:40
+        paddingTop: 40,
     },
     texto: {
         marginTop: 20,
@@ -118,15 +143,15 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     botoes: {
-        marginTop: 60, 
-        width: '100%',  
+        marginTop: 60,
+        width: '100%',
     },
     botao: {
-        backgroundColor: "#fff", 
+        backgroundColor: "#fff",
         padding: 20,
         borderColor: "#A9A4A4",
         borderTopWidth: 0.5,
-        width: "100%", 
+        width: "100%",
     },
     setinha: {
         position: "absolute",
@@ -141,28 +166,11 @@ const styles = StyleSheet.create({
         width: 28,
         height: 28,
         top: 14,
-    },  
+    },
     textoBotao: {
         textAlign: "justify",
         marginLeft: 50,
-        color:"#4092FF"
-    },
-    sair: {
-        position: "absolute",
-        width: 30,
-        height: 30,
-        top: 25,
-        left: 20,
-    },
-    setaesquerda:{
-        width: 10,
-        height: 15,
-        top:40
-    },
-    btnMensagem:{
-        position: 'absolute',
-        top: -25,
-        right: -170
+        color: "#4092FF",
     },
     contatosList: {
         marginTop: 30,
@@ -180,61 +188,57 @@ const styles = StyleSheet.create({
     },
     contactText: {
         fontSize: 18,
-        marginLeft: 10
+        marginLeft: 10,
     },
-    modalOverlay: {
+    textoBotaoContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        marginBottom: 20,
+    },
+    modalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
+        width: '80%',
         backgroundColor: '#F9497D',
         padding: 20,
         borderRadius: 10,
-        width: '80%',
         alignItems: 'center',
     },
     modalTitle: {
-        fontSize: 14,
-        marginBottom: 15,
-        color:"#ffffff"
+        fontSize: 18,
+        color: 'white',
+        marginBottom: 20,
     },
     input: {
         width: '100%',
-        height: 100,
-        borderColor: '#F9F6F6',
-        borderWidth: 1,
+        minHeight: 120,
+        backgroundColor: 'white',
         borderRadius: 5,
-        padding: 10,
-        textAlignVertical: 'top',
-        backgroundColor:"#fff",
-            
-    },
-    modalButtons: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 20,
-        width: '100%',
+        marginBottom: 10,
+        paddingHorizontal: 10,
+        paddingTop: 10,
     },
     saveButton: {
-        backgroundColor: '#fff',
-        padding: 10,
-        borderRadius: 5,
-        flex: 1,
-        marginRight: 5,
+        backgroundColor: '#FFFFFF',
+        padding: 5,
+        borderRadius: 10,
+        width: '25%',
         alignItems: 'center',
     },
-    cancelButton: {
-        backgroundColor: '#fff',
-        padding: 10,
-        borderRadius: 5,
-        flex: 1,
-        marginLeft: 5,
-        alignItems: 'center',
-    },
-    buttonText: {
+    saveButtonText: {
         color: '#F9497D',
-        fontWeight: 'bold',
+        fontSize: 16,
+    }, 
+    buttonContainer: {
+        width: '100%',
+        alignItems: 'flex-end',
+        marginTop: 10,  // Dá um pequeno espaçamento superior
     },
 });
