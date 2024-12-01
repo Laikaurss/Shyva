@@ -83,9 +83,9 @@ export default function Contatos() {
             return;
         }
 
-        const numeroComDdd = `+55${celular}`;
+        const numeroComDdd = `55${celular}`;
 
-        const novoContato = { id: id || gerarId(), nome, celular: numeroComDdd };
+        const novoContato = { id: id || gerarId(), nome, celular, numeroComDdd };
 
         let contatosAtualizados;
         if (id) {
