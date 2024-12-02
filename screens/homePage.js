@@ -41,8 +41,12 @@ export default function HomePage({ navigation }) {
         setCurrentDate(newDate);
     };
 
-    const formattedDate = moment(currentDate).format('MMMM DD');
+    const capitalize = (currentDate) => {
+        return currentDate.charAt(0).toUpperCase() + currentDate.slice(1);
+    }
 
+    const formattedDate = capitalize(moment(currentDate).format('MMMM DD'));
+    
     return (
         <SafeAreaView style={styles.container} {...panResponder.panHandlers}>
              <StatusBar translucent backgroundColor="transparent" barStyle="dark-content"/>
@@ -55,7 +59,7 @@ export default function HomePage({ navigation }) {
 
             <TouchableOpacity 
                 style={styles.navButtonEsquerda} 
-                onPress={() => navigation.navigate('')} 
+                //onPress={() => navigation.navigate('')} 
             >
                 <Image source={require('../assets/bonequinha.png')} style={styles.navboneca} />
             </TouchableOpacity>
@@ -201,7 +205,7 @@ const styles = StyleSheet.create({
         height: 10,
         width: 10,
         borderRadius: 50,
-        backgroundColor: 'gray',
+        backgroundColor: 'green',
         marginHorizontal: 5,
     },
     conteudoCicloContainer: {

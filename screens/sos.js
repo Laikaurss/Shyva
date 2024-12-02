@@ -1,12 +1,25 @@
-import React, { useRef } from 'react';
-import { Button, Text, View, StyleSheet, Image, TouchableOpacity, PanResponder } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { Text, View, StyleSheet, Image, TouchableOpacity, PanResponder, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { StatusBar } from 'react-native';
 import { handlePanic } from '../panicHandler';
+import StyleAlert from '../components/StyleAlert';
+import { carregarContatos } from './addContato';
 
 export default function SOS() {
   const navigation = useNavigation();
+  const [alertVisible, setAlertVisible] = useState(false);
+
+  const handleCustomPanic = async () => {
+    const contatos = await carregarContatos(); // Carrega contatos para fazer verificação
+
+    if (contatos.length === 0) {
+      setAlertVisible(true); // Mostra um alerta se não tiver contatos adicionados
+      return;
+    }
+
+    await handlePanic();
+  };
 
   const panResponder = useRef(
     PanResponder.create({
@@ -30,7 +43,6 @@ export default function SOS() {
         end={{ x: 0, y: 0 }}
         style={styles.container}>
 
-        
         <TouchableOpacity
           style={{ width: '100%' }}
           onPress={() => navigation.navigate('configuracoes')}
@@ -38,10 +50,9 @@ export default function SOS() {
           <Image source={require('../assets/engrenagem.png')} style={styles.imageMenu} />
         </TouchableOpacity>
 
-        
         <TouchableOpacity
-          style={styles.rightButton}  
-          onPress={() => navigation.navigate('informacoes')}  
+          style={styles.rightButton}
+          onPress={() => navigation.navigate('informacoes')}
         >
           <Image source={require('../assets/lampada.png')} style={styles.imageRightButton} />
         </TouchableOpacity>
@@ -53,12 +64,19 @@ export default function SOS() {
         <Image source={require('../assets/viva.png')} style={styles.image} />
         <View style={styles.esfera}></View>
 
-        <TouchableOpacity onPress={handlePanic} style={{ position: 'relative', justifyContent: 'center', marginTop: '25%', height: '50%', width: '30%' }}>
+        <TouchableOpacity onPress={handleCustomPanic} style={{ position: 'relative', justifyContent: 'center', marginTop: '25%', height: '50%', width: '30%' }}>
           <Image source={require('../assets/circulo.png')} style={{ position: 'absolute', alignSelf: 'center', zIndex: 1, borderRadius: 1000, width: '110%', height: '105%' }} />
           <Image source={require('../assets/circulo2.png')} style={{ position: 'absolute', alignSelf: 'center', borderRadius: 1000, width: '160%', height: "150%" }} />
           <Image source={require('../assets/emergencia.png')} style={{ position: 'absolute', alignSelf: 'center', zIndex: 1, width: '80%', height: '65%' }} />
         </TouchableOpacity>
         <Text style={{ color: 'white', marginTop: '6%', fontSize: 18 }}>Emergência</Text>
+
+        <StyleAlert
+          visible={alertVisible}
+          title="Aviso"
+          message="Nenhum contato salvo. Por favor, adicione contatos antes de continuar."
+          onClose={() => setAlertVisible(false)}
+        />
       </LinearGradient>
     </View>
   );
@@ -74,7 +92,7 @@ const styles = StyleSheet.create({
     marginTop: '15%',
     zIndex: 1,
     width: '50%',
-    height: 100,
+    height: 110,
     resizeMode: 'cover',
   },
   container: {
@@ -107,11 +125,11 @@ const styles = StyleSheet.create({
   },
   rightButton: {
     position: 'absolute',
-    top: '24%', 
-    right: '4%', 
+    top: '24%',
+    right: '4%',
   },
   imageRightButton: {
-    width: 28, 
-    height: 28, 
+    width: 28,
+    height: 28,
   },
 });

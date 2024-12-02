@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, FlatList, Dimensions, Modal, TextInput, TouchableWithoutFeedback, BackHandler } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { excluirContato, carregarContatos } from './addContato';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveMessage, loadMessage } from '../messageStorage';
 import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
+
 const { width, height } = Dimensions.get('window');
 
 export default function Contatos() {
     const navigation = useNavigation();
     const [contatos, setContatos] = useState([]);
-    const [modalVisible, setModalVisible] = useState(false);  // Controla a visibilidade do modal
-    const [message, setMessage] = useState('');  // Armazena a mensagem
+    const [modalVisible, setModalVisible] = useState(false); // Controla a visibilidade do modal
+    const [message, setMessage] = useState(''); // Armazena a mensagem
 
     // Função para carregar os contatos
     useFocusEffect(
@@ -23,20 +24,18 @@ export default function Contatos() {
         }, [])
     );
 
-    // Função para carregar a mensagem salva no AsyncStorage quando o modal for aberto
+    // Carregar a mensagem salva no AsyncStorage quando o modal for aberto
     useEffect(() => {
-        const loadMessage = async () => {
-            const savedMessage = await AsyncStorage.getItem('userMessage');
-            if (savedMessage) {
-                setMessage(savedMessage);  // Carrega a mensagem salva no input
+        const fetchMessage = async () => {
+            if (modalVisible) {
+                const savedMessage = await loadMessage(); // Carrega a mensagem utilizando a função utilitária
+                setMessage(savedMessage);
             }
         };
 
-        if (modalVisible) {
-            loadMessage();  // Carrega a mensagem quando o modal estiver visível
-        }
+        fetchMessage();
 
-        // Fechar o modal ao pressionar o botão de voltar no Android
+        // Fecha o modal ao pressionar o botão de voltar no Android
         const backAction = () => {
             if (modalVisible) {
                 setModalVisible(false);
@@ -45,25 +44,12 @@ export default function Contatos() {
             return false; // Permite o comportamento padrão do botão de voltar
         };
 
-        // Adiciona o evento do botão de voltar
         BackHandler.addEventListener('hardwareBackPress', backAction);
 
-        // Limpeza do evento ao desmontar o componente
         return () => {
             BackHandler.removeEventListener('hardwareBackPress', backAction);
         };
     }, [modalVisible]);
-
-    // Função para salvar a mensagem no AsyncStorage
-    const saveMessage = async () => {
-        try {
-            await AsyncStorage.setItem('userMessage', message);
-            setModalVisible(false);  // Fecha o modal após salvar
-            alert('Mensagem salva com sucesso!');
-        } catch (error) {
-            console.error('Erro ao salvar a mensagem', error);
-        }
-    };
 
     return (
         <View style={styles.view}>
@@ -72,8 +58,18 @@ export default function Contatos() {
                     <AntDesign name="left" size={width * 0.07} color="black" />
                 </TouchableOpacity>
                 <Text style={styles.texto}>Contatos</Text>
-                <TouchableOpacity style={{ backgroundColor: '#F9497D' ,width:width * 0.15, height: height * 0.045, alignItems: 'center', borderRadius: 10, marginTop: 5 }} onPress={() => setModalVisible(true)}>
-                    <MaterialCommunityIcons name='email-edit-outline' style={{ color: 'white' }} size={width * 0.08}/>
+                <TouchableOpacity
+                    style={{
+                        backgroundColor: '#F9497D',
+                        width: width * 0.15,
+                        height: height * 0.045,
+                        alignItems: 'center',
+                        borderRadius: 10,
+                        marginTop: 10,
+                    }}
+                    onPress={() => setModalVisible(true)}
+                >
+                    <MaterialCommunityIcons name="email-edit-outline" style={{ color: 'white' }} size={width * 0.08} />
                 </TouchableOpacity>
             </View>
             <View style={styles.botoes}>
@@ -100,9 +96,10 @@ export default function Contatos() {
             {/* Modal de Mensagem */}
             <Modal
                 visible={modalVisible}
-                animationType="slide"  // animação de slide
+                animationType="slide"
                 transparent={true}
-                onRequestClose={() => setModalVisible(false)}>
+                onRequestClose={() => setModalVisible(false)}
+            >
                 <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
                     <View style={styles.modalContainer}>
                         <View style={styles.modalContent}>
@@ -114,10 +111,16 @@ export default function Contatos() {
                                 multiline={true}
                                 numberOfLines={6}
                                 textAlignVertical="top"
-                                onChangeText={setMessage}  // Atualiza o valor da mensagem
+                                onChangeText={setMessage}
                             />
                             <View style={styles.buttonContainer}>
-                                <TouchableOpacity style={styles.saveButton} onPress={saveMessage}>
+                                <TouchableOpacity
+                                    style={styles.saveButton}
+                                    onPress={async () => {
+                                        await saveMessage(message); // Salva a mensagem utilizando a função utilitária
+                                        setModalVisible(false);
+                                    }}
+                                >
                                     <Text style={styles.saveButtonText}>Salvar</Text>
                                 </TouchableOpacity>
                             </View>
@@ -128,7 +131,6 @@ export default function Contatos() {
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     view: {
         backgroundColor: "#FFE9E9",

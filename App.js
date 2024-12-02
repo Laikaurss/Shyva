@@ -3,8 +3,7 @@ import { useState, useEffect } from 'react';
 import { Button, Text, View, StatusBar, TouchableOpacity, Image, TextInput } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import * as Location from 'expo-location';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importando o AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import SosScreen from './screens/sos';
 import Configuracoes from './screens/configuracoes';
@@ -22,13 +21,13 @@ import Mensagem from './screens/mensagem';
 
 function HomeScreen({ navigation }) {
   const [name, setName] = useState('');
-  const [location, setLocation] = useState(null);
 
+  //Pula etapa de inserir nome caso tenha algum salvo na memoria
   useEffect(() => {
     const checkName = async () => {
       try {
         const storedName = await AsyncStorage.getItem('name');
-        console.log('Stored name:', storedName);  // Debugging
+        console.log('Nome salvo', storedName);  // Debugging
         if (storedName) {
           setName(storedName);  // Define o nome no estado se estiver salvo
           navigation.navigate('HomePage');
@@ -39,58 +38,16 @@ function HomeScreen({ navigation }) {
       }
     };
 
-    checkName();
+    checkName(); //Verifica se se o nome está salvo
 
-    const intervalId = setInterval(() => {
-      updateLocation();
-    }, 60000); // Atualiza a localização a cada 1 minuto
-
-    return () => clearInterval(intervalId);
   }, [navigation]);
 
-  const updateLocation = async () => {
-    try {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.error('Permissão para acessar a localização foi negada');
-        return;
-      }
-
-      let loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc.coords);
-      sendLocationToBackend(loc); // Envia a localização para o backend
-    } catch (error) {
-      console.error('Erro ao obter a localização:', error);
-    }
-  };
-
-  const sendLocationToBackend = async (loc) => {
-    const locationData = {
-      latitude: loc.coords.latitude,
-      longitude: loc.coords.longitude,
-    };
-
-    try {
-      const response = await fetch('https://realtime-location-api.onrender.com/localizacao/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(locationData),
-      });
-
-      const data = await response.json();
-      console.log('Resposta do servidor:', data);
-    } catch (error) {
-      console.error('Erro ao enviar localização:', error);
-    }
-  };
 
   const handleNameSubmit = async () => {
     try {
-      // Salva o nome no AsyncStorage
+      // Salva o nome no cache do dispositivo
       await AsyncStorage.setItem('name', name);
-      console.log('Nome salvo:', name);  // Debugging
+      console.log('Nome salvo:', name);  // Confirmação
       navigation.navigate('HomePage');
     } catch (error) {
       console.error('Erro ao salvar o nome:', error);
